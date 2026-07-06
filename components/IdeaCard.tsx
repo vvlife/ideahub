@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { platformMeta } from '@/lib/data'
 import type { Idea, Product } from '@/lib/types'
-import { getProductsByIdea, addProduct } from '@/lib/product-storage'
 import AnalysisModal from './AnalysisModal'
 import Link from 'next/link'
 
@@ -28,19 +27,38 @@ interface IdeaCardProps {
 export default function IdeaCard({ idea }: IdeaCardProps) {
   const meta = platformMeta[idea.platform]
   const [showAnalysis, setShowAnalysis] = useState(false)
-  const [existingProducts, setExistingProducts] = useState<Product[]>([])
+  const [productCount, setProductCount] = useState(0)
+  const [firstProduct, setFirstProduct] = useState<Product | null>(null)
+
+  // 从远程加载该 idea 的产品数
+  useEffect(() => {
+    let cancelled = false
+    const loadProducts = async () => {
+      try {
+        const resp = await fetch(`/api/products/${idea.id}?type=idea`, { cache: 'no-store' })
+        if (resp.ok) {
+          const data = await resp.json()
+          if (!cancelled) {
+            const products: Product[] = data.products || []
+            setProductCount(products.length)
+            setFirstProduct(products[0] || null)
+          }
+        }
+      } catch {}
+    }
+    loadProducts()
+    return () => { cancelled = true }
+  }, [idea.id, showAnalysis])
 
   const handleAnalyze = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    // 加载已有产品
-    setExistingProducts(getProductsByIdea(idea.id))
     setShowAnalysis(true)
   }
 
   const handleProductCreated = (product: Product) => {
-    addProduct(product)
-    setExistingProducts(prev => [product, ...prev])
+    setProductCount(prev => prev + 1)
+    setFirstProduct(product)
   }
 
   return (
@@ -92,24 +110,22 @@ export default function IdeaCard({ idea }: IdeaCardProps) {
             </button>
 
             {/* 已有产品入口 */}
-            {existingProducts.length > 0 && (
-              <div className="flex flex-col gap-1 items-end">
-                {existingProducts.length === 1 ? (
-                  <Link
-                    href={`/product/${existingProducts[0].id}`}
-                    className="text-xs text-green-600 dark:text-green-400 hover:underline"
-                  >
-                    → {existingProducts[0].name}
-                  </Link>
-                ) : (
-                  <Link
-                    href={`/idea/${idea.id}/products`}
-                    className="text-xs text-green-600 dark:text-green-400 hover:underline"
-                  >
-                    → {existingProducts.length} 个产品方案
-                  </Link>
-                )}
-              </div>
+            {productCount > 0 && firstProduct && (
+              productCount === 1 ? (
+                <Link
+                  href={`/product/${firstProduct.id}`}
+                  className="text-xs text-green-600 dark:text-green-400 hover:underline"
+                >
+                  → {firstProduct.name}
+                </Link>
+              ) : (
+                <Link
+                  href={`/idea/${idea.id}/products`}
+                  className="text-xs text-green-600 dark:text-green-400 hover:underline"
+                >
+                  → {productCount} 个产品方案
+                </Link>
+              )
             )}
           </div>
         </div>
@@ -119,7 +135,6 @@ export default function IdeaCard({ idea }: IdeaCardProps) {
       {showAnalysis && (
         <AnalysisModal
           idea={idea}
-          existingProducts={existingProducts}
           onClose={() => setShowAnalysis(false)}
           onProductCreated={handleProductCreated}
         />

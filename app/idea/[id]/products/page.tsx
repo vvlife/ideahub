@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import type { Product } from '@/lib/types'
-import { loadProducts } from '@/lib/product-storage'
 
 export default function IdeaProductsPage() {
   const params = useParams()
@@ -13,9 +12,18 @@ export default function IdeaProductsPage() {
 
   useEffect(() => {
     const ideaId = params.id as string
-    const all = loadProducts()
-    setProducts(all.filter(p => p.ideaId === ideaId))
-    setLoading(false)
+    const loadProducts = async () => {
+      try {
+        const resp = await fetch(`/api/products/${ideaId}?type=idea`, { cache: 'no-store' })
+        if (resp.ok) {
+          const data = await resp.json()
+          setProducts(data.products || [])
+        }
+      } catch {} finally {
+        setLoading(false)
+      }
+    }
+    loadProducts()
   }, [params.id])
 
   if (loading) {

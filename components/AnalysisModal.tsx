@@ -1,27 +1,47 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Idea, Product } from '@/lib/types'
 import Link from 'next/link'
 
 interface AnalysisModalProps {
   idea: Idea
-  existingProducts: Product[]
   onClose: () => void
   onProductCreated: (product: Product) => void
 }
 
-type Step = 'idle' | 'analyzing' | 'result' | 'saving'
+type Step = 'idle' | 'analyzing' | 'result' | 'saving' | 'saved'
 
 export default function AnalysisModal({
   idea,
-  existingProducts,
   onClose,
   onProductCreated,
 }: AnalysisModalProps) {
   const [step, setStep] = useState<Step>('idle')
   const [analysis, setAnalysis] = useState<Partial<Product> | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [existingProducts, setExistingProducts] = useState<Product[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(true)
+
+  // 加载已有产品
+  useEffect(() => {
+    let cancelled = false
+    const loadProducts = async () => {
+      try {
+        const resp = await fetch(`/api/products/${idea.id}?type=idea`, { cache: 'no-store' })
+        if (resp.ok) {
+          const data = await resp.json()
+          if (!cancelled) {
+            setExistingProducts(data.products || [])
+          }
+        }
+      } catch {} finally {
+        if (!cancelled) setLoadingProducts(false)
+      }
+    }
+    loadProducts()
+    return () => { cancelled = true }
+  }, [idea.id])
 
   const handleAnalyze = async () => {
     setStep('analyzing')
@@ -43,16 +63,31 @@ export default function AnalysisModal({
       }
       setAnalysis(data.product)
       setStep('result')
+
+      // 同时保存分析记录到远程
+      try {
+        await fetch('/api/analysis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: `analysis_${Date.now()}`,
+            ideaId: idea.id,
+            ideaTitle: idea.title,
+            analysis: data.product,
+            createdAt: new Date().toISOString(),
+          }),
+        })
+      } catch {}
     } catch (e) {
       setError(e instanceof Error ? e.message : '未知错误')
       setStep('idle')
     }
   }
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!analysis) return
     setStep('saving')
-    
+
     const product: Product = {
       id: `prod_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       ideaId: idea.id,
@@ -71,9 +106,24 @@ export default function AnalysisModal({
       createdAt: new Date().toISOString(),
       status: 'confirmed',
     }
-    
-    onProductCreated(product)
-    onClose()
+
+    try {
+      const resp = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(product),
+      })
+      const data = await resp.json()
+      if (!resp.ok || !data.success) {
+        throw new Error(data.error || '保存失败')
+      }
+      onProductCreated(product)
+      setExistingProducts(prev => [product, ...prev])
+      setStep('saved')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '未知错误')
+      setStep('result')
+    }
   }
 
   return (
@@ -102,7 +152,7 @@ export default function AnalysisModal({
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5">
           {/* 已有产品 */}
-          {existingProducts.length > 0 && step === 'idle' && (
+          {!loadingProducts && existingProducts.length > 0 && step !== 'result' && step !== 'analyzing' && (
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                 已生成的产品方案 ({existingProducts.length})
@@ -128,6 +178,34 @@ export default function AnalysisModal({
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                   想要生成新的产品方案？
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* 保存成功 */}
+          {step === 'saved' && (
+            <div className="text-center py-12">
+              <div className="text-5xl mb-4">✅</div>
+              <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                产品已生成！
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                产品方案已保存，可以查看详情
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
+                >
+                  关闭
+                </button>
+                <Link
+                  href={`/product/${existingProducts[0]?.id}`}
+                  onClick={onClose}
+                  className="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-full hover:opacity-90 transition shadow-sm"
+                >
+                  查看产品详情 →
+                </Link>
               </div>
             </div>
           )}
@@ -180,16 +258,10 @@ export default function AnalysisModal({
                 </p>
               </div>
 
-              {/* 问题分析 */}
               <Section title="🎯 问题分析" content={analysis.problem} />
-              
-              {/* 解决方案 */}
               <Section title="💡 解决方案" content={analysis.solution} />
-              
-              {/* 目标用户 */}
               <Section title="👥 目标用户" content={analysis.targetUsers} />
-              
-              {/* 核心功能 */}
+
               {analysis.coreFeatures && analysis.coreFeatures.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -205,7 +277,6 @@ export default function AnalysisModal({
                 </div>
               )}
 
-              {/* 技术栈 */}
               {analysis.techStack && analysis.techStack.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -221,23 +292,20 @@ export default function AnalysisModal({
                 </div>
               )}
 
-              {/* 商业模式 */}
               <Section title="💰 商业模式" content={analysis.monetization} />
-              
-              {/* 竞品分析 */}
               <Section title="🔍 竞品分析" content={analysis.competitors} />
-              
-              {/* 差异化优势 */}
               <Section title="✨ 差异化优势" content={analysis.differentiator} />
-              
-              {/* MVP 方案 */}
               <Section title="🚀 MVP 方案" content={analysis.mvp} />
+
+              {error && (
+                <p className="text-sm text-red-500">{error}</p>
+              )}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        {step === 'result' && analysis && (
+        {(step === 'result' || step === 'saving') && analysis && (
           <div className="flex items-center justify-between gap-3 p-5 border-t border-gray-100 dark:border-gray-800">
             <button
               onClick={() => setStep('idle')}
@@ -256,7 +324,7 @@ export default function AnalysisModal({
                 onClick={handleConfirm}
                 className="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-full hover:opacity-90 transition shadow-sm"
               >
-                {step === 'saving' as string ? '保存中...' : '✓ 确认生成产品'}
+                {step === 'saving' ? '保存中...' : '✓ 确认生成产品'}
               </button>
             </div>
           </div>

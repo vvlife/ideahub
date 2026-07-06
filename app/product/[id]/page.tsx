@@ -4,27 +4,39 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Product } from '@/lib/types'
-import { loadProducts, deleteProduct } from '@/lib/product-storage'
 
 export default function ProductPage() {
   const params = useParams()
   const router = useRouter()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     const id = params.id as string
-    const products = loadProducts()
-    const found = products.find(p => p.id === id)
-    setProduct(found || null)
-    setLoading(false)
+    const loadProduct = async () => {
+      try {
+        const resp = await fetch(`/api/products/${id}`, { cache: 'no-store' })
+        if (resp.ok) {
+          const data = await resp.json()
+          setProduct(data.product || null)
+        }
+      } catch {} finally {
+        setLoading(false)
+      }
+    }
+    loadProduct()
   }, [params.id])
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!product) return
-    if (confirm(`确定要删除产品「${product.name}」吗？`)) {
-      deleteProduct(product.id)
+    if (!confirm(`确定要删除产品「${product.name}」吗？`)) return
+    setDeleting(true)
+    try {
+      await fetch(`/api/products/${product.id}`, { method: 'DELETE' })
       router.push('/')
+    } catch {} finally {
+      setDeleting(false)
     }
   }
 
@@ -50,7 +62,6 @@ export default function ProductPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* 返回 */}
       <Link href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -119,9 +130,10 @@ export default function ProductPage() {
       <div className="mt-8 flex justify-end gap-3">
         <button
           onClick={handleDelete}
-          className="px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+          disabled={deleting}
+          className="px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition disabled:opacity-50"
         >
-          删除
+          {deleting ? '删除中...' : '删除'}
         </button>
       </div>
     </div>
