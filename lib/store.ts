@@ -1,13 +1,17 @@
-import { ideas as mockIdeas, collections as mockCollections } from './data'
 import type { Idea, Collection, Category, FeedResponse, CollectionsResponse, SearchResponse, CollectionResult, CrawlResponse } from './types'
+import { loadData, saveData, deduplicateIdeas, getInMemoryData } from './storage'
+import { crawlAll } from './crawlers'
+import { clusterIdeas } from './cluster'
 
-// ── In-memory store (simulates a database) ─────────────────────
-let _ideas: Idea[] = [...mockIdeas]
-let _collections: Collection[] = [...mockCollections]
+// ── Get current data (async, reads from storage) ───────────────
+async function getData() {
+  return await loadData()
+}
 
 // ── Feed ───────────────────────────────────────────────────────
-export function getFeed(category?: Category | 'all'): FeedResponse {
-  let filtered = _ideas
+export async function getFeed(category?: Category | 'all'): Promise<FeedResponse> {
+  const data = await getData()
+  let filtered = data.ideas
   if (category && category !== 'all') {
     filtered = filtered.filter(i => i.category === category)
   }
@@ -17,14 +21,15 @@ export function getFeed(category?: Category | 'all'): FeedResponse {
   )
   return {
     ideas: sorted,
-    collections: _collections,
+    collections: data.collections,
     total: sorted.length,
   }
 }
 
 // ── Collections ────────────────────────────────────────────────
-export function getCollections(category?: Category | 'all'): CollectionsResponse {
-  let filtered = _collections
+export async function getCollections(category?: Category | 'all'): Promise<CollectionsResponse> {
+  const data = await getData()
+  let filtered = data.collections
   if (category && category !== 'all') {
     filtered = filtered.filter(c => c.category === category)
   }
@@ -34,25 +39,27 @@ export function getCollections(category?: Category | 'all'): CollectionsResponse
   }
 }
 
-export function getCollectionById(id: string): { collection: Collection; ideas: Idea[] } | null {
-  const collection = _collections.find(c => c.id === id)
+export async function getCollectionById(id: string): Promise<{ collection: Collection; ideas: Idea[] } | null> {
+  const data = await getData()
+  const collection = data.collections.find(c => c.id === id)
   if (!collection) return null
-  const collectionIdeas = _ideas.filter(i => i.collectionId === id)
+  const collectionIdeas = data.ideas.filter(i => i.collectionId === id)
   return { collection, ideas: collectionIdeas }
 }
 
 // ── Search ─────────────────────────────────────────────────────
-export function search(query: string): SearchResponse {
+export async function search(query: string): Promise<SearchResponse> {
+  const data = await getData()
   const q = query.toLowerCase().trim()
   if (!q) return { results: [], total: 0 }
 
-  const matchedIdeas = _ideas.filter(i =>
+  const matchedIdeas = data.ideas.filter(i =>
     i.title.toLowerCase().includes(q) ||
     i.description.toLowerCase().includes(q) ||
     i.category.toLowerCase().includes(q)
   )
 
-  const matchedCollections = _collections.filter(c =>
+  const matchedCollections = data.collections.filter(c =>
     c.title.toLowerCase().includes(q) ||
     c.summary.toLowerCase().includes(q) ||
     c.category.toLowerCase().includes(q)
@@ -79,24 +86,64 @@ export function search(query: string): SearchResponse {
   }
 }
 
-// ── Crawl (placeholder) ────────────────────────────────────────
-export function triggerCrawl(): CrawlResponse {
-  // Placeholder for future crawl logic
-  return {
-    success: true,
-    message: 'Crawl task queued. In production, this would trigger scrapers for various platforms.',
-    crawledAt: new Date().toISOString(),
-    newItems: 0,
+// ── Crawl: trigger real data collection ────────────────────────
+export async function triggerCrawl(): Promise<CrawlResponse> {
+  try {
+    const data = await getData()
+    
+    // Run all crawlers
+    const { ideas: newRawIdeas, stats } = await crawlAll()
+    
+    // Convert to Idea[] format (they already have ids and categories from crawlAll)
+    const newIdeas: Idea[] = newRawIdeas
+    
+    // Deduplicate against existing data
+    const uniqueNew = deduplicateIdeas(data.ideas, newIdeas)
+    
+    // Merge: keep existing + add new
+    const allIdeas = [...data.ideas, ...uniqueNew]
+    
+    // Cluster: re-cluster all ideas
+    const { ideas: clusteredIdeas, collections: newCollections } = clusterIdeas(allIdeas, 0.4)
+    
+    // Save
+    const crawledAt = new Date().toISOString()
+    await saveData(clusteredIdeas, newCollections, crawledAt)
+    
+    stats.collectionsFormed = newCollections.length
+    
+    return {
+      success: true,
+      message: `Crawled ${stats.totalFetched} items from ${Object.keys(stats.byPlatform).length} platforms. ${uniqueNew.length} new items added. ${stats.errors.length} errors.`,
+      crawledAt,
+      newItems: uniqueNew.length,
+      stats,
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Crawl failed: ${error?.message || 'unknown error'}`,
+      crawledAt: new Date().toISOString(),
+      newItems: 0,
+    }
   }
 }
 
-// ── Helpers ────────────────────────────────────────────────────
-export function getIdeaById(id: string): Idea | undefined {
-  return _ideas.find(i => i.id === id)
+// ── Get last crawl time ────────────────────────────────────────
+export async function getLastCrawlTime(): Promise<string | null> {
+  const data = await getData()
+  return data.lastCrawlAt
 }
 
-export function getRelatedIdeas(category: Category, excludeId?: string, limit = 5): Idea[] {
-  return _ideas
+// ── Helpers ────────────────────────────────────────────────────
+export async function getIdeaById(id: string): Promise<Idea | undefined> {
+  const data = await getData()
+  return data.ideas.find(i => i.id === id)
+}
+
+export async function getRelatedIdeas(category: Category, excludeId?: string, limit = 5): Promise<Idea[]> {
+  const data = await getData()
+  return data.ideas
     .filter(i => i.category === category && i.id !== excludeId)
     .sort((a, b) => b.heat - a.heat)
     .slice(0, limit)

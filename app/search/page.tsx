@@ -1,5 +1,4 @@
 import { search } from '@/lib/store'
-import { platformMeta } from '@/lib/data'
 import SearchBar from '@/components/SearchBar'
 import IdeaCard from '@/components/IdeaCard'
 import CollectionCard from '@/components/CollectionCard'
@@ -9,13 +8,15 @@ interface Props {
   searchParams: { q?: string }
 }
 
+export const dynamic = 'force-dynamic'
+
 export function generateMetadata({ searchParams }: Props) {
   return { title: `${searchParams.q || '搜索'} - IdeaHub` }
 }
 
-export default function SearchPage({ searchParams }: Props) {
+export default async function SearchPage({ searchParams }: Props) {
   const query = searchParams.q || ''
-  const results = query ? search(query) : { results: [], total: 0 }
+  const results = query ? await search(query) : { results: [], total: 0 }
 
   return (
     <div>

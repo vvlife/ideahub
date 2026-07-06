@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import { getCollectionById, getRelatedIdeas } from '@/lib/store'
-import { platformMeta } from '@/lib/data'
 import IdeaCard from '@/components/IdeaCard'
 import Link from 'next/link'
 
@@ -8,18 +7,18 @@ interface Props {
   params: { id: string }
 }
 
+export const dynamic = 'force-dynamic'
+
 export function generateMetadata({ params }: Props) {
-  const result = getCollectionById(params.id)
-  if (!result) return { title: '集合未找到 - IdeaHub' }
-  return { title: `${result.collection.title} - IdeaHub` }
+  return { title: `需求集合 - IdeaHub` }
 }
 
-export default function CollectionPage({ params }: Props) {
-  const result = getCollectionById(params.id)
+export default async function CollectionPage({ params }: Props) {
+  const result = await getCollectionById(params.id)
   if (!result) notFound()
 
   const { collection, ideas } = result
-  const relatedIdeas = getRelatedIdeas(collection.category, undefined, 5).filter(
+  const relatedIdeas = (await getRelatedIdeas(collection.category, undefined, 5)).filter(
     i => !i.collectionId || i.collectionId !== collection.id
   )
 

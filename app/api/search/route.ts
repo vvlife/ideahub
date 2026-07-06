@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { search } from '@/lib/store'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const q = searchParams.get('q') || ''
@@ -9,6 +11,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ results: [], total: 0 })
   }
 
-  const results = search(q)
+  const results = await search(q)
   return NextResponse.json(results)
 }

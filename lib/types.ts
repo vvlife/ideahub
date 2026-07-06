@@ -71,4 +71,27 @@ export interface CrawlResponse {
   message: string
   crawledAt: string
   newItems: number
+  stats?: CrawlStats
+}
+
+export interface CrawlStats {
+  totalFetched: number
+  byPlatform: Record<string, number>
+  collectionsFormed: number
+  errors: string[]
+}
+
+export interface RawIdea {
+  title: string
+  description: string
+  platform: Platform
+  sourceUrl: string
+  publishedAt: string
+  heat: number
+}
+
+export interface StorageData {
+  ideas: Idea[]
+  collections: Collection[]
+  lastCrawlAt: string | null
 }

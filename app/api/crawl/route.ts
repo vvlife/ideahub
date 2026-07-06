@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server'
-import { triggerCrawl } from '@/lib/store'
+import { triggerCrawl, getLastCrawlTime } from '@/lib/store'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST() {
-  // Placeholder for future crawl logic
-  // In production, this would queue scrape tasks for various platforms
-  const result = triggerCrawl()
-  return NextResponse.json(result, { status: 200 })
+  const result = await triggerCrawl()
+  return NextResponse.json(result, { status: result.success ? 200 : 500 })
 }
 
 export async function GET() {
+  const lastCrawlAt = await getLastCrawlTime()
   return NextResponse.json({
-    success: false,
-    message: 'This endpoint only supports POST requests. Send a POST request to trigger a crawl task.',
-  }, { status: 405 })
+    success: true,
+    lastCrawlAt,
+    message: lastCrawlAt
+      ? `Last crawl was at ${lastCrawlAt}`
+      : 'No crawl has been performed yet.',
+  })
 }
