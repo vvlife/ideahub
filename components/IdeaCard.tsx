@@ -24,7 +24,7 @@ interface IdeaCardProps {
 }
 
 export default function IdeaCard({ idea }: IdeaCardProps) {
-  const meta = platformMeta[idea.platform]
+  const meta = platformMeta[idea.platform] || platformMeta.other
   const [showAnalysis, setShowAnalysis] = useState(false)
   const [productCount, setProductCount] = useState(0)
   const [firstProduct, setFirstProduct] = useState<Product | null>(null)
