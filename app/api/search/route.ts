@@ -15,10 +15,10 @@ export async function GET(request: Request) {
   // 1. Search local cache
   const localResults = await search(q)
 
-  // 2. Web search via DuckDuckGo
+  // 2. Web search via DuckDuckGo API
   let webResults: any[] = []
   try {
-    const webItems = await webSearch(`${q} 创业 产品 需求`, 10)
+    const webItems = await webSearch(q, 10)
     webResults = webItems.map((item, idx) => ({
       type: 'idea' as const,
       id: `web_${Date.now()}_${idx}`,
@@ -30,7 +30,9 @@ export async function GET(request: Request) {
       heat: 0,
       category: '其他',
     }))
-  } catch {}
+  } catch (e) {
+    console.error('Web search error:', e)
+  }
 
   // 3. Merge: local first, then web (dedup by title)
   const seenTitles = new Set(localResults.results.map((r: any) => r.title?.toLowerCase()))
