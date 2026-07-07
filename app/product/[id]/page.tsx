@@ -11,6 +11,7 @@ export default function ProductPage() {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const [brainstormSessions, setBrainstormSessions] = useState<BrainstormSession[]>([])
   const [startingBrainstorm, setStartingBrainstorm] = useState(false)
 
@@ -54,6 +55,26 @@ export default function ProductPage() {
       router.push('/')
     } catch {} finally {
       setDeleting(false)
+    }
+  }
+
+  const handleGenerate = async () => {
+    if (!product || generating) return
+    setGenerating(true)
+    try {
+      const resp = await fetch(`/api/products/${product.id}/versions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: '' }),
+      })
+      if (resp.ok) {
+        const data = await resp.json()
+        if (data.generatedHtml) {
+          setProduct(prev => prev ? { ...prev, generatedHtml: data.generatedHtml } : null)
+        }
+      }
+    } catch {} finally {
+      setGenerating(false)
     }
   }
 
@@ -129,13 +150,21 @@ export default function ProductPage() {
               <span>{new Date(product.createdAt).toLocaleString('zh-CN')}</span>
             </div>
           </div>
-          {product.generatedHtml && (
+          {product.generatedHtml ? (
             <Link
               href={`/product/${product.id}/app`}
-              className="shrink-0 px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-full hover:opacity-90 transition shadow-sm"
+              className="shrink-0 px-5 py-2.5 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition"
             >
-              👀 预览产品页面 →
+              查看产品页面
             </Link>
+          ) : (
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="shrink-0 px-5 py-2.5 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition disabled:opacity-50"
+            >
+              {generating ? '生成中...' : '生成产品页面'}
+            </button>
           )}
         </div>
       </div>

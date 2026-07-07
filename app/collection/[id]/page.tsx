@@ -49,7 +49,14 @@ export default function CollectionPage() {
   }
 
   if (!collection) {
-    notFound()
+    return (
+      <div className="py-20 text-center">
+        <p className="text-gray-500 dark:text-gray-400 mb-4">集合不存在或已过期</p>
+        <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white transition">
+          返回首页
+        </Link>
+      </div>
+    )
   }
 
   return (
