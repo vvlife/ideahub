@@ -2,21 +2,19 @@ import type { RawIdea, Idea, CrawlStats } from '../types'
 import { categorize } from '../categorize'
 import { filterAds } from '../filter'
 import { isNewsbotAvailable, collectNews } from '../newsbot-client'
-import { getEnabledTopics } from '../topics'
 
 export interface CrawlResult {
   ideas: Idea[]
   stats: CrawlStats
 }
 
-// ── NewsBot collection (primary) ──────────────────────────────
+// ── NewsBot collection ────────────────────────────────────────
 async function crawlNewsbot(): Promise<RawIdea[]> {
   if (!(await isNewsbotAvailable())) {
     return []
   }
 
-  const topics = getEnabledTopics().map(t => t.name)
-  const response = await collectNews(topics, 30)
+  const response = await collectNews([], 30)
 
   if (!response.success || !response.ideas) return []
 
@@ -30,7 +28,7 @@ async function crawlNewsbot(): Promise<RawIdea[]> {
   }))
 }
 
-// ── Main crawl function: NewsBot primary ──────────────────────
+// ── Main crawl function ───────────────────────────────────────
 export async function crawlAll(): Promise<CrawlResult> {
   const errors: string[] = []
   const byPlatform: Record<string, number> = {}
