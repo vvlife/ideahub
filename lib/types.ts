@@ -125,11 +125,19 @@ export interface Product {
   mvp: string             // MVP 方案
   createdAt: string       // 创建时间
   status: 'draft' | 'confirmed'
-  generatedHtml?: string  // 当前版本的可运行 HTML（兼容快照，等于 versions[currentVersion-1].html）
+  generatedHtml?: string  // 当前版本的可运行 HTML
   versions?: ProductVersion[]   // 版本历史
   currentVersion?: number       // 当前展示的版本号
-  deployUrl?: string            // 部署到公网后的可访问链接（Vercel Blob）
-  deployedAt?: string           // 最近一次部署时间（ISO 字符串）
+  deployUrl?: string            // 部署到公网后的可访问链接
+  deployedAt?: string           // 最近一次部署时间
+  votes?: number                // 社区投票数
+  votedBy?: string[]            // 投票用户列表（用于去重）
+}
+
+export interface CommunityProduct extends ProductSummary {
+  votes: number
+  votedBy: string[]
+  rank: number
 }
 
 export interface ProductSummary {

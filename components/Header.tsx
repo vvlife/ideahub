@@ -79,6 +79,10 @@ export default function Header() {
             <span className="text-xl font-bold text-blue-500">Hub</span>
           </Link>
 
+          <Link href="/community" className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition shrink-0">
+            🏆 社区
+          </Link>
+
           <form onSubmit={handleSearch} className="flex-1 max-w-xs sm:max-w-md">
             <div className="relative">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
