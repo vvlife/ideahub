@@ -213,8 +213,56 @@ export async function POST() {
       await saveProduct(product)
       newProductsCount++
 
-      // 4. 发送产品邮件（链接到产品页面）
-      const productUrl = `https://ideahub-pearl.vercel.app/product/${productId}`
+      // 4. 生成产品页面 HTML（后台异步）
+      const productAppUrl = `https://ideahub-pearl.vercel.app/product/${productId}/app`
+
+      // 异步生成 HTML，不阻塞邮件发送
+      const genHtml = async () => {
+        try {
+          const genResp = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://ideahub-pearl.vercel.app'}/api/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: productData.name,
+              tagline: productData.tagline,
+              problem: productData.problem,
+              solution: productData.solution,
+              targetUsers: productData.targetUsers,
+              coreFeatures: productData.coreFeatures,
+              techStack: [],
+            }),
+          })
+          if (genResp.ok) {
+            const genData = await genResp.json()
+            if (genData.html) {
+              // 更新产品 HTML
+              await fetch(`${JSONBLOB_BASE}/${PRODUCTS_BLOB_ID}`, {
+                method: 'GET',
+                cache: 'no-store',
+              }).then(async (r) => {
+                if (r.ok) {
+                  const store = await r.json()
+                  const p = store.products?.find((x: any) => x.id === productId)
+                  if (p) {
+                    p.generatedHtml = genData.html
+                    await fetch(`${JSONBLOB_BASE}/${PRODUCTS_BLOB_ID}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(store),
+                    })
+                  }
+                }
+              })
+              console.log(`[daily] HTML generated for ${productId}`)
+            }
+          }
+        } catch (e) {
+          console.error(`[daily] HTML generation failed:`, e)
+        }
+      }
+      genHtml() // 不 await，后台执行
+
+      // 5. 发送产品邮件（链接到产品应用页面）
       const featuresList = (productData.coreFeatures || []).map((f: string) => `<li style="color:#666;margin-bottom:4px;">• ${f}</li>`).join('')
 
       await sendEmail(

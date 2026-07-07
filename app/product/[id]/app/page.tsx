@@ -41,6 +41,37 @@ export default function ProductAppPage() {
     loadProduct()
   }, [loadProduct])
 
+  // 自动生成功能：如果没有 HTML，自动生成
+  useEffect(() => {
+    if (!product || activeHtml || genState === 'generating') return
+    if (product.generatedHtml || (product.versions && product.versions.length > 0)) return
+
+    // 自动触发生成
+    const autoGenerate = async () => {
+      setGenState('generating')
+      setGenProgress(30)
+      setGenStage('AI 正在生成产品页面...')
+      try {
+        const resp = await fetch(`/api/products/${product.id}/versions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: '' }),
+        })
+        const data = await resp.json()
+        if (data.success) {
+          setGenProgress(100)
+          await loadProduct()
+          setGenState('idle')
+        } else {
+          setGenState('error')
+        }
+      } catch {
+        setGenState('error')
+      }
+    }
+    autoGenerate()
+  }, [product, activeHtml, genState, loadProduct])
+
   // 当前展示的版本 HTML（默认最新版本）
   const versions = (product?.versions || []).slice().sort((a, b) => b.version - a.version)
   const currentVersion = product?.currentVersion || (versions.length ? versions[0].version : 1)
@@ -189,19 +220,13 @@ export default function ProductAppPage() {
   if (!activeHtml) {
     return (
       <div className="max-w-2xl mx-auto py-20 text-center">
-        <p className="text-4xl mb-4">🛠️</p>
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-300 mb-4"></div>
         <p className="text-lg font-medium text-gray-900 mb-2">
-          这个产品还没有生成可运行页面
+          正在生成产品页面...
         </p>
         <p className="text-sm text-gray-500 mb-6">
-          当前仅有产品方案，可先查看方案详情。
+          首次访问将自动生成可运行的产品原型，请稍候。
         </p>
-        <Link
-          href={`/product/${product.id}`}
-          className="px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-blue-500 rounded-full hover:opacity-90 transition"
-        >
-          查看产品方案 →
-        </Link>
       </div>
     )
   }
