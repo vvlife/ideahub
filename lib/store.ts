@@ -47,8 +47,13 @@ export async function triggerCrawl(): Promise<{
   }
 }
 
-// ── Get current cached data ───────────────────────────────────
+// ── Get current cached data (auto-crawl if empty) ─────────────
 export async function getFeed(category?: string): Promise<FeedResponse> {
+  // Auto-crawl if cache is empty
+  if (_ideas.length === 0) {
+    await triggerCrawl()
+  }
+
   let filtered = _ideas
   if (category && category !== 'all') {
     filtered = filtered.filter(i => i.category === category)
@@ -79,6 +84,11 @@ export async function getCollectionById(id: string) {
 export async function search(query: string) {
   const q = query.toLowerCase().trim()
   if (!q) return { results: [], total: 0 }
+
+  // Auto-crawl if cache is empty
+  if (_ideas.length === 0) {
+    await triggerCrawl()
+  }
 
   const matchedIdeas = _ideas.filter(i =>
     i.title.toLowerCase().includes(q) ||
