@@ -8,10 +8,12 @@ export async function POST() {
   try {
     const result = await triggerCrawl()
     return NextResponse.json({
-      success: true,
+      message: result.response.message,
+      crawledAt: result.response.crawledAt,
+      newItems: result.response.newItems,
+      stats: result.response.stats,
       ideas: result.ideas,
       collections: result.collections,
-      ...result.response,
     })
   } catch (error: any) {
     return NextResponse.json(
