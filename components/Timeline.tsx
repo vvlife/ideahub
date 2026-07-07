@@ -24,7 +24,7 @@ export default function Timeline({ ideas, collections }: Props) {
     return collections.filter(c => c.category === selectedCat)
   }, [collections, selectedCat])
 
-  // Merge ideas and collections, sort by time
+  // Merge ideas and collections, sort by time, ideas first
   const timeline = useMemo(() => {
     const items: Array<
       | { type: 'idea'; data: Idea; sortTime: string }
@@ -33,7 +33,12 @@ export default function Timeline({ ideas, collections }: Props) {
       ...filteredIdeas.map(i => ({ type: 'idea' as const, data: i, sortTime: i.publishedAt })),
       ...filteredCollections.map(c => ({ type: 'collection' as const, data: c, sortTime: c.createdAt })),
     ]
-    return items.sort((a, b) => new Date(b.sortTime).getTime() - new Date(a.sortTime).getTime())
+    return items.sort((a, b) => {
+      const diff = new Date(b.sortTime).getTime() - new Date(a.sortTime).getTime()
+      if (diff !== 0) return diff
+      // 同一时间，idea 排在 collection 前面
+      return a.type === 'idea' ? -1 : 1
+    })
   }, [filteredIdeas, filteredCollections])
 
   // Group by date
