@@ -72,7 +72,21 @@ function extractLinkHref(block: string): string {
 }
 
 function cleanHTML(text: string): string {
-  return text.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').trim()
+  // Decode HTML entities first
+  let result = text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+  // Remove HTML tags
+  result = result.replace(/<[^>]*>/g, '')
+  // Clean up whitespace
+  result = result.replace(/\s+/g, ' ').trim()
+  return result
 }
 
 async function fetchFeed(name: string, url: string): Promise<RawIdea[]> {
