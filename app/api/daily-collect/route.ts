@@ -96,7 +96,7 @@ async function sendEmail(to: string, subject: string, html: string) {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'IdeaHub <onboarding@resend.dev>',
+        from: 'IdeaHub <notify@publishmy.site>',
         to,
         subject,
         html,

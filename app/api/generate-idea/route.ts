@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
             'Authorization': `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: 'IdeaHub <onboarding@resend.dev>',
+            from: 'IdeaHub <notify@publishmy.site>',
             to: email,
             subject: `「${product.name}」产品方案已生成`,
             html: `
