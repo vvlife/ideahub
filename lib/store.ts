@@ -1,6 +1,7 @@
 import type { Idea, Collection, CrawlResponse, CrawlStats, FeedResponse } from './types'
 import { crawlAll } from './crawlers'
 import { clusterIdeas } from './cluster'
+import { isAgentlyAvailable, searchAgently } from './agently-client'
 
 // ── In-memory cache (per serverless instance) ─────────────────
 let _ideas: Idea[] = []
@@ -80,6 +81,7 @@ export async function search(query: string) {
   const q = query.toLowerCase().trim()
   if (!q) return { results: [], total: 0 }
 
+  // 1. Local search (in-memory)
   const matchedIdeas = _ideas.filter(i =>
     i.title.toLowerCase().includes(q) ||
     i.description.toLowerCase().includes(q)
@@ -89,7 +91,7 @@ export async function search(query: string) {
     c.summary.toLowerCase().includes(q)
   )
 
-  const results = [
+  const localResults = [
     ...matchedIdeas.map(i => ({ type: 'idea' as const, ...i })),
     ...matchedCollections.map(c => ({
       type: 'collection' as const,
@@ -98,7 +100,33 @@ export async function search(query: string) {
     })),
   ].sort((a: any, b: any) => (b.heat ?? 0) - (a.heat ?? 0))
 
-  return { results, total: results.length }
+  // 2. Agently search (web search) if local results are sparse
+  if (localResults.length < 3 && (await isAgentlyAvailable())) {
+    try {
+      const agentlyResult = await searchAgently(query, 8, 'w')
+      if (agentlyResult.success && agentlyResult.ideas) {
+        const agentlyIdeas = agentlyResult.ideas.map((item, idx) => ({
+          type: 'idea' as const,
+          id: `agently_search_${Date.now()}_${idx}`,
+          title: item.title,
+          description: item.description,
+          platform: 'other' as const,
+          sourceUrl: item.sourceUrl || '',
+          publishedAt: item.publishedAt || new Date().toISOString(),
+          heat: 0,
+          category: '其他' as const,
+        }))
+        // Merge: local first, then Agently results (dedup by title)
+        const seenTitles = new Set(localResults.map((r: any) => r.title?.toLowerCase()))
+        const uniqueAgently = agentlyIdeas.filter(a => !seenTitles.has(a.title?.toLowerCase()))
+        localResults.push(...uniqueAgently)
+      }
+    } catch (e) {
+      console.error('Agently search failed:', e)
+    }
+  }
+
+  return { results: localResults, total: localResults.length }
 }
 
 export function getLastCrawlTime() { return _lastCrawlAt }
