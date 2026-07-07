@@ -6,10 +6,11 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const session = await getBrainstormSession(params.sessionId)
+    const { sessionId } = await params
+    const session = await getBrainstormSession(sessionId)
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
@@ -22,7 +23,7 @@ export async function POST(
     }
 
     // 获取所有需求并合并
-    const requirements = await getBrainstormRequirements(params.sessionId)
+    const requirements = await getBrainstormRequirements(sessionId)
     if (requirements.length === 0) {
       return NextResponse.json(
         { error: 'No requirements to merge' },
@@ -59,7 +60,7 @@ export async function POST(
       })
     }
 
-    await closeBrainstormSession(params.sessionId, mergedText)
+    await closeBrainstormSession(sessionId, mergedText)
 
     return NextResponse.json({
       success: true,

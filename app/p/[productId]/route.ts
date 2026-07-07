@@ -6,9 +6,10 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
-  const product = await getProduct(params.productId)
+  const { productId } = await params
+  const product = await getProduct(productId)
   if (!product) {
     return new Response('Product not found', { status: 404 })
   }

@@ -9,21 +9,22 @@ const votesStore = new Map<string, { votes: number; votedBy: string[] }>()
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const { userId } = await req.json()
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
-    const product = await getProduct(params.id)
+    const product = await getProduct(id)
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
     // 获取当前投票状态
-    const current = votesStore.get(params.id) || {
+    const current = votesStore.get(id) || {
       votes: product.votes || 0,
       votedBy: product.votedBy || [],
     }
@@ -32,14 +33,14 @@ export async function POST(
     if (hasVoted) {
       // 取消投票
       current.votes = Math.max(0, current.votes - 1)
-      current.votedBy = current.votedBy.filter(id => id !== userId)
+      current.votedBy = current.votedBy.filter(uid => uid !== userId)
     } else {
       // 增加投票
       current.votes += 1
       current.votedBy.push(userId)
     }
 
-    votesStore.set(params.id, current)
+    votesStore.set(id, current)
 
     // 同步到产品存储
     const { promises: fs } = await import('fs')
@@ -49,7 +50,7 @@ export async function POST(
     try {
       const raw = await fs.readFile(LOCAL_STORE_PATH, 'utf-8')
       const store = JSON.parse(raw)
-      const p = store.products?.find((x: any) => x.id === params.id)
+      const p = store.products?.find((x: any) => x.id === id)
       if (p) {
         p.votes = current.votes
         p.votedBy = current.votedBy

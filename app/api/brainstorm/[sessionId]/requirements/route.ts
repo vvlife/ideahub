@@ -7,9 +7,10 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
+    const { sessionId } = await params
     const { author, content, type } = await req.json()
 
     if (!author || !content) {
@@ -19,7 +20,7 @@ export async function POST(
       )
     }
 
-    const session = await getBrainstormSession(params.sessionId)
+    const session = await getBrainstormSession(sessionId)
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
@@ -33,7 +34,7 @@ export async function POST(
 
     const requirement: BrainstormRequirement = {
       id: `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      sessionId: params.sessionId,
+      sessionId: sessionId,
       author,
       content,
       type: type || 'requirement',

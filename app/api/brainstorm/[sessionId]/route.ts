@@ -6,15 +6,16 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const session = await getBrainstormSession(params.sessionId)
+    const { sessionId } = await params
+    const session = await getBrainstormSession(sessionId)
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
 
-    const requirements = await getBrainstormRequirements(params.sessionId)
+    const requirements = await getBrainstormRequirements(sessionId)
 
     return NextResponse.json({ session, requirements })
   } catch (error) {

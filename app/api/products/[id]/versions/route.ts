@@ -13,10 +13,11 @@ interface VersionRequest {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const product = await getProduct(params.id)
+    const { id } = await params
+    const product = await getProduct(id)
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
@@ -95,7 +96,7 @@ ${featuresText}
       )
     }
 
-    const newVersion = await addProductVersion(params.id, content, userPrompt || undefined)
+    const newVersion = await addProductVersion(id, content, userPrompt || undefined)
     if (!newVersion) {
       return NextResponse.json({ error: 'Failed to save version' }, { status: 500 })
     }

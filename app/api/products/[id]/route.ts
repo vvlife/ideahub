@@ -7,10 +7,10 @@ export const dynamic = 'force-dynamic'
 // GET /api/products/[id] — 获取单个产品或按 ideaId 查询
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id
+    const { id } = await params
 
     // 支持 ?type=idea 查询某 idea 的所有产品
     const url = new URL(req.url)
@@ -40,14 +40,15 @@ export async function GET(
 // PATCH /api/products/[id] — 异步写回生成的产品 HTML
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await req.json()
     const { generatedHtml, currentVersion, deployUrl } = body
 
     if (typeof currentVersion === 'number') {
-      const ok = await setCurrentVersion(params.id, currentVersion)
+      const ok = await setCurrentVersion(id, currentVersion)
       if (!ok) {
         return NextResponse.json(
           { error: 'Product not found or version not found' },
@@ -58,7 +59,7 @@ export async function PATCH(
     }
 
     if (typeof deployUrl === 'string') {
-      const ok = await updateProductDeployUrl(params.id, deployUrl)
+      const ok = await updateProductDeployUrl(id, deployUrl)
       if (!ok) {
         return NextResponse.json(
           { error: 'Product not found' },
@@ -74,7 +75,7 @@ export async function PATCH(
         { status: 400 }
       )
     }
-    const success = await updateProductHtml(params.id, generatedHtml)
+    const success = await updateProductHtml(id, generatedHtml)
     if (!success) {
       return NextResponse.json(
         { error: 'Product not found or update failed' },
@@ -93,10 +94,11 @@ export async function PATCH(
 // DELETE /api/products/[id] — 删除产品
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await deleteProduct(params.id)
+    const { id } = await params
+    const success = await deleteProduct(id)
     if (!success) {
       return NextResponse.json(
         { error: 'Failed to delete product' },
