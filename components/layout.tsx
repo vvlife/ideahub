@@ -3,64 +3,86 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-export function Header() {
+const NAV_ITEMS = [
+  {
+    href: '/',
+    label: '首页',
+    icon: (active: boolean) => (
+      <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={active ? 0 : 1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
+      </svg>
+    ),
+  },
+  {
+    href: '/community',
+    label: '社区',
+    icon: (active: boolean) => (
+      <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2a4 4 0 100-8 4 4 0 000 8zm6 0a4 4 0 100-8 4 4 0 000 8z" />
+      </svg>
+    ),
+  },
+  {
+    href: '/create',
+    label: '创作',
+    icon: () => (
+      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 flex items-center justify-center -mt-3 shadow-lg shadow-pink-500/30">
+        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+      </div>
+    ),
+    highlight: true,
+  },
+  {
+    href: '/search',
+    label: '搜索',
+    icon: (active: boolean) => (
+      <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    ),
+  },
+  {
+    href: '/subscribe',
+    label: '订阅',
+    icon: (active: boolean) => (
+      <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+      </svg>
+    ),
+  },
+]
+
+export function BottomNav() {
   const pathname = usePathname()
 
-  // 在首页（swipe feed）和 home landing 页不显示 header
-  if (pathname === '/' || pathname === '/home') return null
+  // 隐藏底部导航：首页 swipe feed 全屏模式、产品预览页
+  if (pathname === '/preview' || pathname.startsWith('/preview/')) return null
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
-      <div className="mx-auto max-w-3xl px-4">
-        <div className="flex items-center justify-between h-14 gap-3">
-          <Link href="/" className="flex items-center gap-1.5 shrink-0 font-semibold text-gray-900">
-            Idea<span className="text-blue-600">Hub</span>
-          </Link>
-
-          <div className="flex items-center gap-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-lg border-t border-white/10">
+      <div className="flex items-center justify-around h-14 px-2">
+        {NAV_ITEMS.map((item) => {
+          const active = pathname === item.href
+          return (
             <Link
-              href="/"
-              className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition shrink-0"
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1 transition ${
+                active ? 'text-white' : 'text-white/40 hover:text-white/70'
+              }`}
             >
-              刷一刷
+              {item.icon(active)}
+              <span className={`text-[10px] ${active ? 'font-medium' : ''}`}>{item.label}</span>
             </Link>
-            <Link
-              href="/chat"
-              className="px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-full hover:opacity-90 transition shrink-0"
-            >
-              创作
-            </Link>
-            <Link
-              href="/community"
-              className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition shrink-0"
-            >
-              社区
-            </Link>
-            <Link
-              href="/subscribe"
-              className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition shrink-0"
-            >
-              订阅
-            </Link>
-          </div>
-        </div>
+          )
+        })}
       </div>
-    </header>
+    </nav>
   )
 }
 
-export function Footer() {
-  const pathname = usePathname()
-
-  // 不在首页和 home 页显示 footer
-  if (pathname === '/' || pathname === '/home') return null
-
-  return (
-    <footer className="border-t border-gray-100 mt-12">
-      <div className="mx-auto max-w-3xl px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-400">
-        <span>IdeaHub · 刷网页的 TikTok</span>
-        <span>AI 生成 · 可交互 · 可分享</span>
-      </div>
-    </footer>
-  )
-}
+// 保留旧导出以兼容
+export function Header() { return null }
+export function Footer() { return null }

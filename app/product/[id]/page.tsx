@@ -10,53 +10,16 @@ export default function ProductPage() {
   const router = useRouter()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
-  const [deleting, setDeleting] = useState(false)
   const [generating, setGenerating] = useState(false)
-  const [brainstormSessions, setBrainstormSessions] = useState<BrainstormSession[]>([])
-  const [startingBrainstorm, setStartingBrainstorm] = useState(false)
 
   useEffect(() => {
     const id = params.id as string
-    const loadProduct = async () => {
-      try {
-        const resp = await fetch(`/api/products/${id}`, { cache: 'no-store' })
-        if (resp.ok) {
-          const data = await resp.json()
-          setProduct(data.product || null)
-        }
-      } catch { /* ignore */ } finally {
-        setLoading(false)
-      }
-    }
-    loadProduct()
+    fetch(`/api/products/${id}`, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setProduct(data?.product || null))
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [params.id])
-
-  // 获取该产品的 brainstorm 会话
-  useEffect(() => {
-    const loadBrainstormSessions = async () => {
-      if (!product) return
-      try {
-        // 通过搜索本地存储获取会话（简化实现）
-        const stored = localStorage.getItem(`brainstorm_${product.id}`)
-        if (stored) {
-          setBrainstormSessions(JSON.parse(stored))
-        }
-      } catch { /* ignore */ }
-    }
-    loadBrainstormSessions()
-  }, [product])
-
-  const handleDelete = async () => {
-    if (!product) return
-    if (!confirm(`确定要删除产品「${product.name}」吗？`)) return
-    setDeleting(true)
-    try {
-      await fetch(`/api/products/${product.id}`, { method: 'DELETE' })
-      router.push('/')
-    } catch { /* ignore */ } finally {
-      setDeleting(false)
-    }
-  }
 
   const handleGenerate = async () => {
     if (!product || generating) return
@@ -73,116 +36,82 @@ export default function ProductPage() {
           setProduct(prev => prev ? { ...prev, generatedHtml: data.generatedHtml } : null)
         }
       }
-    } catch { /* ignore */ } finally {
-      setGenerating(false)
-    }
-  }
-
-  const handleStartBrainstorm = async () => {
-    if (!product || startingBrainstorm) return
-    setStartingBrainstorm(true)
-    try {
-      const resp = await fetch('/api/brainstorm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: product.id }),
-      })
-      if (resp.ok) {
-        const { session } = await resp.json()
-        // 保存到本地存储
-        const sessions = [...brainstormSessions, session]
-        setBrainstormSessions(sessions)
-        localStorage.setItem(`brainstorm_${product.id}`, JSON.stringify(sessions))
-        // 同时保存 session 数据到全局，供 brainstorm 页面读取
-        const allSessions = JSON.parse(localStorage.getItem('brainstorm_sessions') || '{}')
-        allSessions[session.id] = session
-        localStorage.setItem('brainstorm_sessions', JSON.stringify(allSessions))
-        // 跳转到 brainstorm 页面
-        router.push(`/brainstorm/${session.id}`)
-      }
-    } catch { /* ignore */ } finally {
-      setStartingBrainstorm(false)
-    }
+    } catch { /* ignore */ }
+    setGenerating(false)
   }
 
   if (loading) {
     return (
-      <div className="py-20 text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-300"></div>
+      <div className="min-h-screen flex items-center justify-center bg-black pb-20">
+        <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin" />
       </div>
     )
   }
 
   if (!product) {
     return (
-      <div className="py-20 text-center">
-        <p className="text-4xl mb-4">📦</p>
-        <p className="text-gray-500 mb-2">产品不存在</p>
-        <Link href="/" className="text-blue-500 hover:underline text-sm">
-          返回首页
-        </Link>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-black pb-20 gap-4">
+        <p className="text-white/40">产品不存在</p>
+        <Link href="/" className="text-sm text-pink-400 hover:text-pink-300">返回首页</Link>
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <Link href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 mb-6 transition">
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-        返回
-      </Link>
+    <div className="min-h-screen bg-black text-white pb-20">
+      {/* Header */}
+      <div className="sticky top-0 z-30 bg-black/95 backdrop-blur-lg border-b border-white/10 px-4 py-3 flex items-center gap-3">
+        <Link href="/" className="text-white/60 hover:text-white transition">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </Link>
+        <h1 className="text-base font-bold flex-1 truncate">{product.name}</h1>
+        {product.generatedHtml && (
+          <Link
+            href={`/product/${product.id}/app`}
+            className="px-3 py-1.5 text-xs font-medium bg-white text-black rounded-lg hover:bg-white/90 transition active:scale-95"
+          >
+            体验
+          </Link>
+        )}
+      </div>
 
-      {/* 产品头部 */}
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-6 mb-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900">
-              {product.name}
-            </h1>
-            <p className="text-base text-gray-600 mt-2">
-              {product.tagline}
-            </p>
-            <div className="mt-4 flex items-center gap-3 text-xs text-gray-400">
-              <span>基于需求：{product.ideaTitle}</span>
-              <span>·</span>
-              <span>{new Date(product.createdAt).toLocaleString('zh-CN')}</span>
-            </div>
-          </div>
-          {product.generatedHtml ? (
-            <Link
-              href={`/product/${product.id}/app`}
-              className="shrink-0 px-5 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition"
-            >
-              查看产品页面
-            </Link>
-          ) : (
-            <button
-              onClick={handleGenerate}
-              disabled={generating}
-              className="shrink-0 px-5 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
-            >
-              {generating ? '生成中...' : '生成产品页面'}
-            </button>
-          )}
+      {/* Hero */}
+      <div className="px-4 py-6 bg-gradient-to-b from-white/[0.03] to-transparent">
+        <h2 className="text-2xl font-bold mb-2">{product.name}</h2>
+        <p className="text-sm text-white/60">{product.tagline}</p>
+        <div className="mt-3 flex items-center gap-2 text-[10px] text-white/30">
+          <span className="bg-white/5 px-2 py-0.5 rounded-full">{product.ideaTitle?.slice(0, 20)}</span>
+          <span>·</span>
+          <span>{new Date(product.createdAt).toLocaleDateString('zh-CN')}</span>
         </div>
       </div>
 
-      {/* 内容 */}
-      <div className="space-y-6">
-        <Section title="🎯 问题分析" content={product.problem} />
-        <Section title="💡 解决方案" content={product.solution} />
-        <Section title="👥 目标用户" content={product.targetUsers} />
+      {!product.generatedHtml && (
+        <div className="px-4 py-6">
+          <button
+            onClick={handleGenerate}
+            disabled={generating}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 text-white text-sm font-semibold hover:opacity-90 transition active:scale-95 disabled:opacity-50"
+          >
+            {generating ? '生成中...' : '生成产品页面'}
+          </button>
+        </div>
+      )}
 
-        {product.coreFeatures.length > 0 && (
+      {/* Details */}
+      <div className="px-4 py-4 space-y-5">
+        <Section title="🎯 问题" content={product.problem} />
+        <Section title="💡 方案" content={product.solution} />
+        <Section title="👥 用户" content={product.targetUsers} />
+
+        {product.coreFeatures?.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              ⚡ 核心功能
-            </h2>
-            <div className="flex flex-wrap gap-2">
+            <h3 className="text-sm font-semibold text-white/80 mb-2">⚡ 核心功能</h3>
+            <div className="flex flex-wrap gap-1.5">
               {product.coreFeatures.map((f, i) => (
-                <span key={i} className="px-3 py-1.5 text-sm rounded-full bg-blue-50 text-blue-600">
+                <span key={i} className="px-2.5 py-1 text-xs rounded-full bg-white/5 text-white/60 border border-white/10">
                   {f}
                 </span>
               ))}
@@ -190,14 +119,12 @@ export default function ProductPage() {
           </div>
         )}
 
-        {product.techStack.length > 0 && (
+        {product.techStack?.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              🛠 推荐技术栈
-            </h2>
-            <div className="flex flex-wrap gap-2">
+            <h3 className="text-sm font-semibold text-white/80 mb-2">🛠 技术栈</h3>
+            <div className="flex flex-wrap gap-1.5">
               {product.techStack.map((t, i) => (
-                <span key={i} className="px-3 py-1.5 text-sm rounded-full bg-gray-100 text-gray-600">
+                <span key={i} className="px-2.5 py-1 text-xs rounded-full bg-white/5 text-white/40 border border-white/10">
                   {t}
                 </span>
               ))}
@@ -206,62 +133,9 @@ export default function ProductPage() {
         )}
 
         <Section title="💰 商业模式" content={product.monetization} />
-        <Section title="🔍 竞品分析" content={product.competitors} />
-        <Section title="✨ 差异化优势" content={product.differentiator} />
-        <Section title="🚀 MVP 方案" content={product.mvp} />
+        <Section title="✨ 差异化" content={product.differentiator} />
+        <Section title="🚀 MVP" content={product.mvp} />
       </div>
-
-      {/* 操作 */}
-      <div className="mt-8 flex justify-end gap-3">
-        <button
-          onClick={handleStartBrainstorm}
-          disabled={startingBrainstorm}
-          className="px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition disabled:opacity-50"
-        >
-          {startingBrainstorm ? '创建中...' : '💬 发起 Brainstorm'}
-        </button>
-        <button
-          onClick={handleDelete}
-          disabled={deleting}
-          className="px-4 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
-        >
-          {deleting ? '删除中...' : '删除'}
-        </button>
-      </div>
-
-      {/* 历史 Brainstorm 会话 */}
-      {brainstormSessions.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">
-            Brainstorm 历史
-          </h2>
-          <div className="space-y-2">
-            {brainstormSessions.map((session) => (
-              <Link
-                key={session.id}
-                href={`/brainstorm/${session.id}`}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-indigo-300:border-indigo-700 transition"
-              >
-                <div className="flex items-center gap-3">
-                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                    session.status === 'active'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {session.status === 'active' ? '进行中' : '已结束'}
-                  </span>
-                  <span className="text-sm text-gray-600">
-                    {session.participants.length} 人参与 · {session.requirementCount} 条需求
-                  </span>
-                </div>
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -270,12 +144,8 @@ function Section({ title, content }: { title: string; content?: string }) {
   if (!content) return null
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-2">
-        {title}
-      </h2>
-      <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
-        {content}
-      </p>
+      <h3 className="text-sm font-semibold text-white/80 mb-1.5">{title}</h3>
+      <p className="text-sm text-white/50 leading-relaxed">{content}</p>
     </div>
   )
 }

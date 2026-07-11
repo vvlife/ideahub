@@ -67,87 +67,91 @@ export default function CommunityPage() {
 
   if (loading) {
     return (
-      <div className="py-20 text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-300"></div>
-        <p className="mt-4 text-sm text-gray-400">加载中...</p>
+      <div className="min-h-screen flex items-center justify-center bg-black pb-20">
+        <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">社区作品</h1>
-        <p className="mt-1 text-sm text-gray-500">用户生成的产品，投票支持你喜欢的</p>
+    <div className="min-h-screen bg-black text-white pb-20">
+      {/* Header */}
+      <div className="sticky top-0 z-30 bg-black/95 backdrop-blur-lg border-b border-white/10 px-4 py-3">
+        <h1 className="text-lg font-bold text-white">社区排行</h1>
+        <p className="text-xs text-white/40">投票支持你喜欢的作品</p>
       </div>
 
       {products.length === 0 ? (
-        <div className="py-20 text-center">
-          <p className="text-gray-500 mb-2">还没有作品</p>
-          <p className="text-sm text-gray-400">
-            <Link href="/" className="hover:text-gray-600-300 transition">去首页</Link> 生成第一个产品
-          </p>
+        <div className="flex flex-col items-center justify-center py-32 gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
+            <svg className="w-8 h-8 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2a4 4 0 100-8 4 4 0 000 8z" />
+            </svg>
+          </div>
+          <p className="text-white/40 text-sm">还没有作品</p>
+          <Link
+            href="/create"
+            className="px-5 py-2 text-sm font-medium bg-white text-black rounded-full hover:bg-white/90 transition active:scale-95"
+          >
+            创作第一个
+          </Link>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="px-4 py-3 space-y-2.5">
           {products.map((product) => {
-            const hasVoted = product.votedBy.includes(userId)
+            const hasVoted = product.votedBy?.includes(userId)
             return (
               <div
                 key={product.id}
-                className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200:border-gray-700 transition"
+                className="flex items-center gap-3 p-3 bg-white/[0.03] rounded-2xl border border-white/5 hover:border-white/10 transition"
               >
-                {/* 排名 */}
-                <div className="shrink-0 w-10 text-center">
-                  <span className={`text-lg font-bold ${
-                    product.rank <= 3 ? 'text-amber-500' : 'text-gray-400'
+                {/* Rank */}
+                <div className="shrink-0 w-8 text-center">
+                  <span className={`text-base font-bold ${
+                    product.rank <= 3 ? 'text-yellow-400' : 'text-white/30'
                   }`}>
                     {product.rank}
                   </span>
                 </div>
 
-                {/* 投票按钮 */}
+                {/* Vote */}
                 <button
                   onClick={() => handleVote(product.id)}
                   disabled={votingId === product.id}
-                  className={`shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition ${
+                  className={`shrink-0 flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl transition ${
                     hasVoted
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                      ? 'bg-gradient-to-br from-pink-500/20 to-red-500/20 text-pink-400 border border-pink-500/30'
+                      : 'bg-white/5 text-white/50 hover:bg-white/10 border border-white/5'
                   }`}
                 >
-                  <svg className={`w-5 h-5 ${votingId === product.id ? 'animate-pulse' : ''}`} fill={hasVoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  <svg className={`w-4 h-4 ${votingId === product.id ? 'animate-pulse' : ''}`} fill={hasVoted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
-                  <span className="text-xs font-bold">{product.votes}</span>
+                  <span className="text-[11px] font-bold">{product.votes}</span>
                 </button>
 
-                {/* 产品信息 */}
-                <div className="flex-1 min-w-0">
-                  <Link
-                    href={`/product/${product.id}/app`}
-                    className="block hover:opacity-80 transition"
-                  >
-                    <h3 className="text-base font-semibold text-gray-900 truncate">
-                      {product.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 truncate mt-0.5">
-                      {product.tagline}
-                    </p>
-                  </Link>
-                  <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400">
-                    <span>基于「{product.ideaTitle.slice(0, 20)}」</span>
-                    <span>·</span>
-                    <span>{new Date(product.createdAt).toLocaleDateString('zh-CN')}</span>
-                  </div>
-                </div>
-
-                {/* 预览链接 */}
+                {/* Info */}
                 <Link
                   href={`/product/${product.id}/app`}
-                  className="shrink-0 px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                  className="flex-1 min-w-0"
                 >
-                  预览 →
+                  <h3 className="text-sm font-semibold text-white truncate">{product.name}</h3>
+                  <p className="text-xs text-white/40 truncate mt-0.5">{product.tagline}</p>
+                  <div className="flex items-center gap-1.5 mt-1 text-[10px] text-white/30">
+                    <span>{product.ideaTitle?.slice(0, 16)}{product.ideaTitle?.length > 16 ? '…' : ''}</span>
+                    <span>·</span>
+                    <span>{new Date(product.createdAt).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}</span>
+                  </div>
+                </Link>
+
+                {/* Preview */}
+                <Link
+                  href={`/product/${product.id}/app`}
+                  className="shrink-0 w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition active:scale-90"
+                >
+                  <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
                 </Link>
               </div>
             )
