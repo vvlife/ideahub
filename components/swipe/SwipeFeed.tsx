@@ -205,7 +205,7 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
               product={product}
               userId={userId}
               isActive={i === idx}
-              shouldLoad={i === idx}
+              shouldLoad={Math.abs(i - idx) <= 1}
               isFullscreen={fullscreen === i}
               onRequestFullscreen={() => setFullscreen(idx)}
               onExitFullscreen={() => setFullscreen(null)}

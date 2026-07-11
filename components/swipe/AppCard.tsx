@@ -42,15 +42,10 @@ export default function AppCard({
     }
   }, [product.id, shouldLoad])
 
-  // Stop audio when becoming inactive: remove src to silence the iframe
+  // Stop audio when becoming inactive: hide iframe container (display:none pauses audio in most browsers)
   useEffect(() => {
     if (!isActive) {
       setLoaded(false)
-      // Force iframe to unload by clearing its src
-      const iframe = iframeRef.current
-      if (iframe && iframe.src) {
-        iframe.src = 'about:blank'
-      }
     }
   }, [isActive])
 
@@ -136,7 +131,12 @@ export default function AppCard({
       src={shouldLoad ? `/p/${product.id}` : undefined}
       className="w-full h-full border-0"
       sandbox="allow-scripts allow-forms allow-same-origin allow-modals allow-popups"
-      style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.3s' }}
+      style={{
+        opacity: loaded ? 1 : 0,
+        transition: 'opacity 0.3s',
+        // When not active, hide the iframe completely to pause audio playback
+        display: isActive ? 'block' : 'none',
+      }}
       onLoad={() => setLoaded(true)}
     />
   )
@@ -199,8 +199,8 @@ export default function AppCard({
   // Card mode (TikTok style — default, non-fullscreen)
   return (
     <div className="relative w-full h-full bg-black overflow-hidden select-none touch-none z-10">
-      {/* Blurred bg — only load when active to save resources & prevent audio leak */}
-      <div className="absolute inset-0 z-[1]">
+      {/* Blurred bg — only render when active to prevent audio leak */}
+      <div className="absolute inset-0 z-[1]" style={{ display: isActive ? 'block' : 'none' }}>
         {shouldLoad ? (
           <iframe
             title={product.name + '_bg'}
