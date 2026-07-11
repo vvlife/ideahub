@@ -32,20 +32,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 1: AI 分析需求 → 产品方案
-    const analyzePrompt = `你是一个资深产品经理。请根据用户的需求描述，设计一个产品方案。只输出 JSON，不要任何其他文字。
+    const analyzePrompt = `你是一个资深游戏设计师。请根据用户的需求描述，设计一个休闲小游戏方案。只输出 JSON，不要任何其他文字。
 
 ## 用户需求
 ${prompt}
 
 ## 输出格式（JSON）
 {
-  "name": "产品名称（中文，简洁有力，2-6字）",
-  "tagline": "一句话描述核心价值（10-20字）",
-  "problem": "要解决的真实问题（30-50字）",
-  "solution": "产品如何解决（30-50字）",
-  "targetUsers": "目标用户群体（20-30字）",
-  "coreFeatures": ["功能1", "功能2", "功能3", "功能4"],
-  "techStack": ["技术1", "技术2"]
+  "name": "游戏名称（中文，简洁有力，2-6字）",
+  "tagline": "一句话描述游戏玩法（10-20字）",
+  "problem": "游戏解决的娱乐需求（30-50字）",
+  "solution": "游戏核心玩法说明（30-50字）",
+  "targetUsers": "目标玩家群体（20-30字）",
+  "coreFeatures": ["玩法1", "玩法2", "玩法3", "玩法4"],
+  "techStack": ["HTML", "CSS", "JavaScript"]
 }`
 
     const analyzeResp = await fetch(`${AGNES_BASE_URL}/chat/completions`, {
@@ -57,7 +57,7 @@ ${prompt}
       body: JSON.stringify({
         model: 'agnes-1.5-flash',
         messages: [
-          { role: 'system', content: '你是资深产品经理，只输出合法 JSON 对象，不要 markdown 代码块标记。' },
+          { role: 'system', content: '你是资深游戏设计师，只输出合法 JSON 对象，不要 markdown 代码块标记。' },
           { role: 'user', content: analyzePrompt },
         ],
         temperature: 0.4,
@@ -103,22 +103,22 @@ ${prompt}
     // Step 2: 生成 HTML
     const featuresText = (productPlan.coreFeatures || []).map((f: string, i: number) => `${i + 1}. ${f}`).join('\n')
 
-    const genPrompt = `你是一个资深全栈工程师。请根据以下产品方案，生成一个单文件、可直接运行的产品原型页面。
+    const genPrompt = `你是一个资深游戏开发者。请根据以下游戏方案，生成一个单文件、可直接运行的小游戏页面。
 
-## 产品方案
+## 游戏方案
 - 名称: ${productPlan.name}
 - 一句话: ${productPlan.tagline}
-- 问题: ${productPlan.problem}
-- 解决方案: ${productPlan.solution}
-- 目标用户: ${productPlan.targetUsers}
-- 核心功能:
+- 玩法: ${productPlan.solution}
+- 目标玩家: ${productPlan.targetUsers}
+- 核心玩法:
 ${featuresText}
 
 ## 要求
 1. 输出完整 HTML 文件，含内部 <style> 和 <script>，自包含无外部依赖
-2. 真实可交互：按钮点击有响应、表单能提交、列表能增删
-3. 现代美观：渐变、卡片、圆角、阴影，支持暗色模式，移动端友好
-4. 文案和数据与产品主题强相关
+2. 游戏必须真实可玩：有开始/结束逻辑、计分、游戏循环
+3. 支持键盘和触摸操作（移动端友好）
+4. 现代美观：渐变、动画、圆角，深色主题
+5. 游戏数据与主题强相关
 
 只输出 HTML 代码，以 <!DOCTYPE html> 开头，不要解释文字。`
 
@@ -131,7 +131,7 @@ ${featuresText}
       body: JSON.stringify({
         model: 'agnes-1.5-flash',
         messages: [
-          { role: 'system', content: '你是资深全栈工程师，只输出 HTML 代码。' },
+          { role: 'system', content: '你是资深游戏开发者，只输出 HTML 代码。' },
           { role: 'user', content: genPrompt },
         ],
         temperature: 0.8,

@@ -245,17 +245,17 @@ export default function CreatePage() {
 
         <h1 className="text-2xl font-bold text-white mb-2">AI 一键创应用</h1>
         <p className="text-sm text-white/40 mb-8 text-center max-w-xs">
-          输入你想要的应用，AI 自动分析需求并生成可交互的产品原型
+          描述你想要的游戏，AI 自动生成可玩的小游戏
         </p>
 
         {/* Examples */}
         <div className="flex flex-wrap gap-2 justify-center mb-6 max-w-md">
           {[
-            '垃圾分类查询器',
-            '番茄钟专注工具',
-            '每日记账本',
-            'BMI 健康计算器',
-            '菜谱随机推荐',
+            '打地鼠游戏',
+            '太空射击游戏',
+            '消消乐',
+            '贪吃蛇大作战',
+            '弹球游戏',
           ].map((ex) => (
             <button
               key={ex}
@@ -279,7 +279,7 @@ export default function CreatePage() {
                   handleCreate()
                 }
               }}
-              placeholder="描述你想要的应用，比如：一个帮助记住朋友生日的提醒工具..."
+              placeholder="描述你想要的游戏，比如：一个猫咪接金鱼的休闲游戏..."
               rows={3}
               className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-white/25 resize-none focus:outline-none focus:border-white/30 transition"
               autoFocus
@@ -291,7 +291,7 @@ export default function CreatePage() {
             disabled={!prompt.trim()}
             className="w-full mt-3 py-3.5 rounded-2xl bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white text-sm font-semibold hover:opacity-90 transition active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            ✨ 生成应用
+            ✨ 生成游戏
           </button>
 
           <p className="text-[10px] text-white/25 text-center mt-2">

@@ -77,7 +77,7 @@ export default function HomePage() {
           </svg>
         </div>
         <div className="text-center">
-          <p className="text-lg text-white/90 font-medium">还没有作品</p>
+          <p className="text-lg text-white/90 font-medium">还没有游戏</p>
           <p className="text-sm text-white/40 mt-1">输入想法，AI 帮你生成第一个</p>
         </div>
         <a

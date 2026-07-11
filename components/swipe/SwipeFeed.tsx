@@ -168,12 +168,12 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
               </svg>
             </div>
             <p className="text-white/60 text-sm mb-1">已经到底了</p>
-            <p className="text-white/30 text-xs mb-8">自己创作一个吧</p>
+            <p className="text-white/30 text-xs mb-8">自己创作一个游戏吧</p>
             <Link
               href="/create"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white/80 hover:text-white transition-all border border-white/10 text-sm font-medium active:scale-95"
             >
-              创作应用
+              创作游戏
             </Link>
           </div>
         </div>

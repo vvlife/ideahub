@@ -1,78 +1,51 @@
-# IdeaHub · 刷网页的 TikTok
+# IdeaHub · 刷游戏的 TikTok
 
-> 输入一句话想法，AI 60 秒生成可交互应用。上下滑动浏览，像刷抖音一样刷产品。
+> 输入一句话，AI 生成小游戏。上下滑动浏览，全屏试玩，社区投票。
 
-**🚀 在线体验：https://ideahub-pearl.vercel.app**
-
----
+🔗 **线上**: https://ideahub-pearl.vercel.app
 
 ## ✨ 核心特性
 
-- 🎬 **TikTok 式滑动浏览** — 全屏竖向卡片，上下滑动切换 AI 生成的应用
-- ⚡ **一键创建** — 输入想法描述，AI 自动分析需求 → 设计方案 → 生成可交互 HTML 应用
-- 🤖 **Agnes AI 驱动** — 全程使用 Agnes 免费 API，零成本端到端生成
-- 📊 **社区排行** — 点赞投票，热门应用上榜
-- 🔍 **智能搜索** — 关键词检索所有 AI 生成作品
-- 📬 **主题订阅** — 选感兴趣的领域，每日推送精选
-- 📱 **移动端优先** — 390×844 视口设计，触摸交互优化
-
----
+- **🎯 一键创建游戏** — 输入想法，AI 自动分析→设计→生成可玩小游戏（约 60 秒）
+- **📱 TikTok 式滑动浏览** — 全屏卡片，上下滑动切换游戏，沉浸式体验
+- **🎮 即开即玩** — 每个游戏都是自包含 HTML，点击即玩，无需下载
+- **🔄 版本管理** — 不满意？描述调整需求，AI 生成新版本
+- **🏆 社区排行** — 投票支持喜欢的游戏，排行榜实时更新
+- **💬 Brainstorm 协作** — 发起讨论，收集需求，AI 重新生成产品
+- **📰 订阅推送** — 订阅感兴趣的主题，每日邮件推送新作品
 
 ## 📱 页面预览
 
-### 首页 · 刷产品
+| 首页滑动 | 社区排行 | 创作游戏 |
+|:---:|:---:|:---:|
+| ![Home](./public/screenshots/home.png) | ![Community](./public/screenshots/community.png) | ![Create](./public/screenshots/create.png) |
 
-全屏 TikTok 风格卡片，右侧操作栏（点赞/分享/全屏/详情），底部渐变信息区。
+| 游戏详情 | 全屏试玩 | 搜索 |
+|:---:|:---:|:---:|
+| ![Detail](./public/screenshots/product-detail.png) | ![App](./public/screenshots/product-app.png) | ![Search](./public/screenshots/search.png) |
 
-![首页](public/screenshots/home.png)
+## 🎮 内置游戏
 
-### 创作页 · 一键生成
-
-输入想法 → AI 分阶段生成（分析需求 → 设计方案 → 生成应用 → 发布上线）→ 全屏预览成品。
-
-![创作页](public/screenshots/create.png)
-
-### 社区 · 排行榜
-
-所有 AI 生成应用按点赞数排名，点击卡片查看详情，点击爱心投票。
-
-![社区](public/screenshots/community.png)
-
-### 产品详情
-
-展示产品方案（问题、解决方案、目标用户、核心功能、技术栈），可查看应用预览、发起 Brainstorm 协作。
-
-![产品详情](public/screenshots/product-detail.png)
-
-### 应用预览
-
-全屏查看 AI 生成的 HTML 应用，支持版本切换。
-
-![应用预览](public/screenshots/product-app.png)
-
-### 搜索 & 订阅
-
-关键词搜索 + 标签快捷筛选；邮件订阅每日精选。
-
-![搜索](public/screenshots/search.png)
-
-![订阅](public/screenshots/subscribe.png)
-
----
+| 游戏 | 玩法 |
+|---|---|
+| 2048 | 经典数字合并，滑动合成 2048 |
+| 画画板 | 自由绘画涂鸦，选色画笔 |
+| 打砖块 | 控制挡板反弹小球消除砖块 |
+| 俄罗斯方块 | 经典七种方块，消除整行 |
+| 记忆翻牌 | 翻牌配对，考验记忆力 |
+| 贪吃蛇 | 经典贪吃蛇，吃食物变长 |
+| 数字猜谜 | 猜 1-100 数字，AI 给提示 |
+| 彩色反应 | 测试反应速度，绿屏即点 |
 
 ## 🛠 技术栈
 
-| 层 | 技术 |
+| 层级 | 技术 |
 |---|---|
-| 框架 | Next.js 14 (App Router) + TypeScript |
-| 样式 | Tailwind CSS（黑色主题） |
-| AI | Agnes AI `agnes-1.5-flash`（免费，256K 上下文） |
-| 存储 | localStorage + jsonblob.com 远程备份 |
-| 部署 | Vercel (Hobby) |
-| 搜索 | DuckDuckGo |
-| RSS | V2EX / HN / ProductHunt / Reddit / 36Kr / SSPAI / 知乎 / GitHub Trending |
-
----
+| 前端 | Next.js 14 + Tailwind CSS |
+| AI | Agnes AI (agnes-1.5-flash) — 需求分析 + HTML 生成 |
+| 存储 | jsonblob.com (远程) + localStorage (本地) |
+| 部署 | Vercel (Serverless) |
+| 搜索 | DuckDuckGo API |
 
 ## 🚀 本地开发
 
@@ -80,92 +53,47 @@
 git clone https://github.com/vvlife/ideahub.git
 cd ideahub
 npm install
-```
 
-配置环境变量：
+# 配置环境变量
+echo "AGNES_API_KEY=your_key_here" > .env.local
+echo "JSONBLOB_ID=your_blob_id" >> .env.local
 
-```bash
-# .env.local
-AGNES_API_KEY=your_agnes_api_key  # 从 https://agnes-ai.com 获取
-```
+# 填充演示数据
+node scripts/seed-games.mjs
 
-启动开发服务器：
-
-```bash
+# 启动
 npm run dev
-# 打开 http://localhost:3000
 ```
-
-填充演示数据：
-
-```bash
-npm run seed
-```
-
----
-
-## 📖 创建流程
-
-```
-用户输入想法
-    ↓
-Agnes AI 分析需求 (agnes-1.5-flash, ~3s)
-    ↓
-生成产品方案 (名称/标语/问题/解决方案/核心功能/技术栈)
-    ↓
-Agnes AI 生成 HTML (agnes-1.5-flash, ~55s)
-    ↓
-保存到社区，出现在首页滑动流
-    ↓
-用户可点赞/分享/查看详情/发起协作
-```
-
----
 
 ## 📂 项目结构
 
 ```
 ideahub/
 ├── app/
-│   ├── page.tsx                 # 首页 (TikTok 滑动流)
-│   ├── create/page.tsx          # AI 一键创建
-│   ├── community/page.tsx       # 社区排行
-│   ├── search/page.tsx          # 搜索
-│   ├── subscribe/page.tsx       # 订阅
-│   ├── product/[id]/
-│   │   ├── page.tsx             # 产品详情
-│   │   └── app/page.tsx         # 应用全屏预览
+│   ├── page.tsx                  # 首页 - TikTok 滑动流
+│   ├── create/page.tsx           # 创作页 - AI 一键生成
+│   ├── community/page.tsx        # 社区排行
+│   ├── product/[id]/             # 产品详情
+│   ├── product/[id]/app/         # 全屏试玩
+│   ├── search/page.tsx           # 搜索
+│   ├── subscribe/page.tsx        # 订阅
 │   └── api/
-│       ├── create/route.ts      # AI 创建端点
-│       ├── community/route.ts   # 社区列表
-│       ├── search/route.ts      # 搜索
-│       ├── vote/route.ts        # 投票
-│       └── subscriptions/route.ts
+│       ├── create/route.ts       # AI 生成游戏 API
+│       ├── community/route.ts    # 社区列表 API
+│       ├── products/[id]/        # 产品 CRUD
+│       └── p/[productId]/        # HTML 托管
 ├── components/
-│   ├── swipe/
-│   │   ├── SwipeFeed.tsx        # 滑动容器
-│   │   └── AppCard.tsx          # 单个卡片
-│   └── layout.tsx               # 底部导航栏
+│   ├── swipe/                    # TikTok 滑动组件
+│   │   ├── SwipeFeed.tsx
+│   │   └── AppCard.tsx
+│   └── layout.tsx                # 底部导航栏
 ├── lib/
-│   ├── remote-store.ts          # 远程存储
-│   ├── rss-fetcher.ts           # RSS 抓取
-│   ├── filter.ts                # 广告过滤
-│   └── types.ts                 # 类型定义
+│   ├── remote-store.ts           # 远程存储层
+│   └── types.ts                  # 类型定义
 └── scripts/
-    └── seed.mjs                 # 演示数据
+    └── seed-games.mjs            # 游戏种子数据
 ```
 
----
-
-## 📝 License
+## 📄 License
 
 MIT
-
----
-
-## 🙏 Acknowledgements
-
-- [Agnes AI](https://agnes-ai.com) — 免费全模态 API
-- [Next.js](https://nextjs.org) — React 框架
-- [Vercel](https://vercel.com) — 部署平台
-- [Tailwind CSS](https://tailwindcss.com) — 样式系统
