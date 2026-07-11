@@ -91,7 +91,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="fixed inset-0 z-30 bg-black">
+    <div className="fixed inset-0 bg-black">
       <SwipeFeed products={products} userId={userId} onRefresh={loadProducts} />
     </div>
   )

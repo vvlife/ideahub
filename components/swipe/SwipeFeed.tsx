@@ -23,6 +23,7 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
   const [idx, setIdx] = useState(0)
   const [animating, setAnimating] = useState(false)
   const [showHint, setShowHint] = useState(true)
+  const [fullscreen, setFullscreen] = useState<number | null>(null)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const touch = useRef({ startY: 0, lastY: 0, dragging: false, moved: false })
@@ -43,15 +44,21 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
     lock.current = true
     setAnimating(true)
     setIdx(clamped)
+    // Keep fullscreen in sync when navigating
+    if (fullscreen !== null) {
+      if (clamped <= lastIdx) setFullscreen(clamped)
+      else setFullscreen(null)
+    }
     setTimeout(() => {
       lock.current = false
       setAnimating(false)
     }, ANIM_MS)
-  }, [idx, total])
+  }, [idx, total, lastIdx, fullscreen])
 
-  // Touch handlers
+  // Touch handlers (only active in card mode, not fullscreen)
   const onTouchStart = (e: React.TouchEvent) => {
     if (lock.current || total <= 1) return
+    if (fullscreen !== null) return // fullscreen handles its own swipes
     touch.current = { startY: e.touches[0].clientY, lastY: e.touches[0].clientY, dragging: true, moved: false }
   }
 
@@ -75,12 +82,13 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
     }
   }
 
-  // Wheel
+  // Wheel (only in card mode)
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
     const onWheel = (e: WheelEvent) => {
       if (lock.current || total <= 1) return
+      if (fullscreen !== null) return // fullscreen handles its own wheel
       if (e.deltaY > 15 && idx < total - 1) goTo(idx + 1)
       else if (e.deltaY < -15) {
         if (idx === 0 && onRefresh && Math.abs(e.deltaY) > 60) onRefresh()
@@ -89,17 +97,18 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
     }
     el.addEventListener('wheel', onWheel, { passive: true })
     return () => el.removeEventListener('wheel', onWheel)
-  }, [idx, goTo, total, onRefresh])
+  }, [idx, goTo, total, onRefresh, fullscreen])
 
   // Keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); if (idx < total - 1) goTo(idx + 1) }
       else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); if (idx > 0) goTo(idx - 1) }
+      else if (e.key === 'Escape' && fullscreen !== null) { setFullscreen(null) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [goTo, idx, total])
+  }, [goTo, idx, total, fullscreen])
 
   const getTransform = () => {
     if (total === 0) return 'translateY(0)'
@@ -118,7 +127,17 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
     return `translateY(${base + offset / vh * 100}vh)`
   }
 
+  const isFs = fullscreen !== null
   const atEnd = idx === endIdx
+
+  // Fullscreen navigation handlers
+  const fsNext = useCallback(() => {
+    if (fullscreen !== null && fullscreen < lastIdx) goTo(fullscreen + 1)
+  }, [fullscreen, lastIdx, goTo])
+
+  const fsPrev = useCallback(() => {
+    if (fullscreen !== null && fullscreen > 0) goTo(fullscreen - 1)
+  }, [fullscreen, goTo])
 
   return (
     <div
@@ -143,6 +162,11 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
               userId={userId}
               isActive={i === idx}
               shouldLoad={Math.abs(i - idx) <= 1}
+              isFullscreen={fullscreen === i}
+              onRequestFullscreen={() => setFullscreen(idx)}
+              onExitFullscreen={() => setFullscreen(null)}
+              onFullscreenNext={fsNext}
+              onFullscreenPrev={fsPrev}
             />
           </div>
         ))}
@@ -168,7 +192,7 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
       </div>
 
       {/* Hint */}
-      {showHint && products.length > 1 && !atEnd && (
+      {showHint && products.length > 1 && !isFs && !atEnd && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
           <div className="bg-white/10 backdrop-blur-md text-white/60 text-xs px-4 py-2 rounded-full border border-white/10 animate-bounce">
             ↑↓ 滑动切换
@@ -176,8 +200,24 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
         </div>
       )}
 
+      {/* Progress dots (right side) */}
+      {!isFs && total > 2 && total < 30 && (
+        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-0">
+          {Array.from({ length: total }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              className="flex items-center justify-center"
+              style={{ width: '24px', height: '24px' }}
+            >
+              <span className={`rounded-full transition-all duration-300 ${i === idx ? 'w-[4px] h-5 bg-white' : 'w-[3px] h-[3px] bg-white/30'}`} />
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Top bar */}
-      {!atEnd && (
+      {!isFs && !atEnd && (
         <div className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
           <div className="flex items-center justify-between px-4 pt-3">
             <span className="text-sm font-bold text-white/80">IdeaHub</span>
