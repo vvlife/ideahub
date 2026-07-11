@@ -134,12 +134,24 @@ export interface Product {
   votes?: number                // 社区投票数
   votedBy?: string[]            // 投票用户列表（用于去重）
   clonedFrom?: string           // 来源产品ID（复制/改编时使用）
+  // GameMonetize external game metadata
+  _source?: string               // 'gamemonetize' for external games
+  _externalUrl?: string          // External game URL (iframe src)
+  _thumb?: string                // Thumbnail URL
+  _category?: string             // Game category (arcade/puzzle/etc)
 }
 
 export interface CommunityProduct extends ProductSummary {
   votes: number
   votedBy: string[]
   rank: number
+  generatedHtml?: string
+  versions?: ProductVersion[]
+  currentVersion?: number
+  _thumb?: string
+  _source?: string
+  _category?: string
+  _externalUrl?: string
 }
 
 export interface ProductSummary {

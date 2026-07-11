@@ -57,8 +57,8 @@ const NAV_ITEMS = [
 export function BottomNav() {
   const pathname = usePathname()
 
-  // 隐藏底部导航：首页 swipe feed 全屏模式、产品预览页
-  if (pathname === '/preview' || pathname.startsWith('/preview/')) return null
+  // 隐藏底部导航：首页 swipe feed 全屏沉浸式、产品预览页
+  if (pathname === '/' || pathname === '/preview' || pathname.startsWith('/preview/')) return null
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-lg border-t border-white/10">

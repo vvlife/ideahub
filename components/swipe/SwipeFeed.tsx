@@ -23,7 +23,6 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
   const [idx, setIdx] = useState(0)
   const [animating, setAnimating] = useState(false)
   const [showHint, setShowHint] = useState(true)
-  const [fullscreen, setFullscreen] = useState<number | null>(null)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const touch = useRef({ startY: 0, lastY: 0, dragging: false, moved: false })
@@ -44,16 +43,11 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
     lock.current = true
     setAnimating(true)
     setIdx(clamped)
-    if (fullscreen !== null && clamped <= lastIdx) {
-      setFullscreen(clamped)
-    } else if (clamped === endIdx) {
-      setFullscreen(null)
-    }
     setTimeout(() => {
       lock.current = false
       setAnimating(false)
     }, ANIM_MS)
-  }, [idx, total, lastIdx, endIdx, fullscreen])
+  }, [idx, total])
 
   // Touch handlers
   const onTouchStart = (e: React.TouchEvent) => {
@@ -124,7 +118,6 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
     return `translateY(${base + offset / vh * 100}vh)`
   }
 
-  const isFs = fullscreen !== null
   const atEnd = idx === endIdx
 
   return (
@@ -149,12 +142,7 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
               product={product}
               userId={userId}
               isActive={i === idx}
-              shouldLoad={Math.abs(i - idx) <= 2}
-              isFullscreen={fullscreen === i}
-              onRequestFullscreen={() => setFullscreen(idx)}
-              onExitFullscreen={() => setFullscreen(null)}
-              onFullscreenNext={() => { if (fullscreen !== null && fullscreen < lastIdx) goTo(fullscreen + 1) }}
-              onFullscreenPrev={() => { if (fullscreen !== null && fullscreen > 0) goTo(fullscreen - 1) }}
+              shouldLoad={Math.abs(i - idx) <= 1}
             />
           </div>
         ))}
@@ -179,17 +167,8 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
         </div>
       </div>
 
-      {/* Hidden preload div — mounts adjacent iframes so they start loading */}
-      <div aria-hidden className="hidden" >
-        {products.map((p, i) => (
-          Math.abs(i - idx) === 2 && (
-            <iframe key={`pre_${p.id}`} src={`/p/${p.id}`} title="preload" className="w-0 h-0 border-0" sandbox="allow-scripts" />
-          )
-        ))}
-      </div>
-
       {/* Hint */}
-      {showHint && products.length > 1 && !isFs && !atEnd && (
+      {showHint && products.length > 1 && !atEnd && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
           <div className="bg-white/10 backdrop-blur-md text-white/60 text-xs px-4 py-2 rounded-full border border-white/10 animate-bounce">
             ↑↓ 滑动切换
@@ -197,32 +176,14 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
         </div>
       )}
 
-      {/* Progress dots (right side) */}
-      {!isFs && total > 2 && (
-        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-0">
-          {Array.from({ length: total }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(i)}
-              className="flex items-center justify-center"
-              style={{ width: '24px', height: '24px' }}
-            >
-              <span className={`rounded-full transition-all duration-300 ${i === idx ? 'w-[4px] h-5 bg-white' : 'w-[3px] h-[3px] bg-white/30'}`} />
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Top bar */}
-      {!isFs && !atEnd && (
+      {!atEnd && (
         <div className="fixed top-0 left-0 right-0 z-40 pointer-events-none">
           <div className="flex items-center justify-between px-4 pt-3">
             <span className="text-sm font-bold text-white/80">IdeaHub</span>
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-white/30 font-mono">
-                {idx + 1 < total ? `${idx + 1}/${lastIdx + 1}` : 'END'}
-              </span>
-            </div>
+            <span className="text-[10px] text-white/30 font-mono">
+              {idx + 1 < total ? `${idx + 1}/${lastIdx + 1}` : 'END'}
+            </span>
           </div>
         </div>
       )}
