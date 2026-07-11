@@ -179,14 +179,15 @@ export default function AppCard({
       <div className="absolute inset-0 flex items-center justify-center px-4 z-10" style={{ paddingBottom: '160px', paddingTop: '60px' }}>
         <div className="w-full h-full max-w-[400px] relative">
           <div
-            className="w-full h-full rounded-[24px] overflow-hidden border border-white/15 shadow-[0_0_80px_rgba(0,0,0,0.7)] bg-white"
+            className="w-full h-full rounded-[24px] overflow-hidden border border-white/15 shadow-[0_0_80px_rgba(0,0,0,0.7)] bg-gradient-to-br from-gray-900 to-gray-800"
             onClick={onRequestFullscreen}
           >
-            {shouldLoad ? iframe : <div className="w-full h-full bg-gray-900" />}
+            {shouldLoad ? iframe : <div className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center"><div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-white/30 animate-spin" /></div>}
             {!loaded && shouldLoad && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 rounded-[24px] z-10">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 rounded-[24px] z-10">
                 <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin" />
                 <p className="mt-3 text-sm text-white/50">{product.name}</p>
+                <p className="mt-1 text-[10px] text-white/25">加载中...</p>
               </div>
             )}
           </div>

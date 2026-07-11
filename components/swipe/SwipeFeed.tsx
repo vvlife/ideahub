@@ -149,7 +149,7 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
               product={product}
               userId={userId}
               isActive={i === idx}
-              shouldLoad={Math.abs(i - idx) <= 1}
+              shouldLoad={Math.abs(i - idx) <= 2}
               isFullscreen={fullscreen === i}
               onRequestFullscreen={() => setFullscreen(idx)}
               onExitFullscreen={() => setFullscreen(null)}
@@ -160,23 +160,32 @@ export default function SwipeFeed({ products, userId, onRefresh }: SwipeFeedProp
         ))}
 
         {/* End card */}
-        <div className="h-screen w-full relative bg-black flex flex-col items-center justify-center px-8">
+        <div className="h-screen w-full relative flex flex-col items-center justify-center px-8" style={{ background: 'linear-gradient(180deg, #000000 0%, #0a0a0f 50%, #111827 100%)' }}>
           <div className="text-center max-w-sm">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-pink-500/20">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
             </div>
-            <p className="text-white/60 text-sm mb-1">已经到底了</p>
-            <p className="text-white/30 text-xs mb-8">自己创作一个游戏吧</p>
+            <p className="text-white/80 text-base font-medium mb-1">已经到底了</p>
+            <p className="text-white/40 text-xs mb-8">自己创作一个游戏吧</p>
             <Link
               href="/create"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white/80 hover:text-white transition-all border border-white/10 text-sm font-medium active:scale-95"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white transition-all border border-white/10 text-sm font-medium active:scale-95"
             >
               创作游戏
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* Hidden preload div — mounts adjacent iframes so they start loading */}
+      <div aria-hidden className="hidden" >
+        {products.map((p, i) => (
+          Math.abs(i - idx) === 2 && (
+            <iframe key={`pre_${p.id}`} src={`/p/${p.id}`} title="preload" className="w-0 h-0 border-0" sandbox="allow-scripts" />
+          )
+        ))}
       </div>
 
       {/* Hint */}
