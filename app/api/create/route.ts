@@ -55,7 +55,7 @@ ${prompt}
         'Authorization': `Bearer ${AGNES_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'agnes-2.0-flash',
+        model: 'agnes-1.5-flash',
         messages: [
           { role: 'system', content: '你是资深产品经理，只输出合法 JSON 对象，不要 markdown 代码块标记。' },
           { role: 'user', content: analyzePrompt },
@@ -129,12 +129,13 @@ ${featuresText}
         'Authorization': `Bearer ${AGNES_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'agnes-2.0-flash',
+        model: 'agnes-1.5-flash',
         messages: [
           { role: 'system', content: '你是资深全栈工程师，只输出 HTML 代码。' },
           { role: 'user', content: genPrompt },
         ],
         temperature: 0.8,
+        max_tokens: 8000,
       }),
       // @ts-expect-error undici-specific option
       dispatcher: agnesAgent,
